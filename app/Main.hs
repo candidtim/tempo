@@ -3,16 +3,16 @@ module Main where
 import System.Environment
 import Control.Monad
 
-import Lib
+import Config
+import Jira
+import Git
 
 
 main :: IO ()
 main = do
   gitArgs <- getArgs
+  config <- readConfig
   user <- getGitUser
-  issuePattern <- getIssuePattern
-  gitLog <- getGitLog user gitArgs issuePattern
+  gitLog <- getGitLog config user gitArgs
   let proposedWorkLog = calculateWorkLog gitLog
-  confirmed <- askToConfirm proposedWorkLog
-  when (confirmed) $ do
-    logWork proposedWorkLog
+  logWork config proposedWorkLog

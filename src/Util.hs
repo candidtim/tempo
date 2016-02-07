@@ -3,6 +3,7 @@ module Util
 ) where
 
 import Data.Char (isSpace)
+import Data.ByteString.Char8 (ByteString, pack)
 
 trim :: String -> String
 trim = f . f
