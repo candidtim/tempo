@@ -12,7 +12,7 @@ import Data.Time.Format
 import Text.Printf
 import Network.HTTP.Conduit
 import Control.Monad.Trans.Resource (runResourceT)
-import Data.ByteString.Char8 (pack)
+import Data.ByteString.Char8 (ByteString(..), pack)
 
 import Config
 
@@ -29,10 +29,9 @@ instance Show WorkLog where
 logWork :: Config -> [WorkLog] -> IO ()
 logWork conf ws = do
   request'' <- parseUrl $ issueUrl conf (head ws)
-  let request' = applyBasicAuth "user" "pass" $ request'' -- TODO: use real credentials
+  let request' = applyBasicAuth (getJiraUser conf) (getJiraPassword conf) request''
       (WorkLog d i h) = head ws -- TODO: log all
-      params' = [("time", show h), ("user", (getJiraUser conf)), ("date", datefmt d), ("ansidate", ansidatefmt d)]
-      params  = map (\(n,v) -> (n, pack v)) params'
+      params = [("time", pack.show $ h), ("user", (getJiraUser conf)), ("date", datefmt d), ("ansidate", ansidatefmt d)]
       request = urlEncodedBody params request'
   manager  <- newManager tlsManagerSettings
   runResourceT $ do
@@ -40,11 +39,11 @@ logWork conf ws = do
     return ()
   return ()
 
-datefmt :: Day -> String
-datefmt = formatTime defaultTimeLocale "%d/%b/%y"
+datefmt :: Day -> ByteString
+datefmt = pack . formatTime defaultTimeLocale "%d/%b/%y"
 
-ansidatefmt :: Day -> String
-ansidatefmt = formatTime defaultTimeLocale "%Y-%m-%d"
+ansidatefmt :: Day -> ByteString
+ansidatefmt = pack . formatTime defaultTimeLocale "%Y-%m-%d"
 
 issueUrl :: Config -> WorkLog -> String
 issueUrl conf (WorkLog _ issue _) = printf "https://%s/rest/tempo-rest/1.0/worklogs/%s" (getJiraHost conf) issue
