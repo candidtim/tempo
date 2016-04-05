@@ -31,7 +31,7 @@ logWork conf ws = do
   request'' <- parseUrl $ issueUrl conf (head ws)
   let request' = applyBasicAuth (getJiraUser conf) (getJiraPassword conf) request''
       (WorkLog d i h) = head ws -- TODO: log all
-      params = [("time", pack.show $ h), ("user", (getJiraUser conf)), ("date", datefmt d), ("ansidate", ansidatefmt d)]
+      params = [("time", pack.show $ h), ("user", getJiraUser conf), ("date", datefmt d), ("ansidate", ansidatefmt d)]
       request = urlEncodedBody params request'
   manager  <- newManager tlsManagerSettings
   runResourceT $ do

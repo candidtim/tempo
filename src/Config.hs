@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Config
 ( Config(..)
 , IssuePattern
@@ -8,7 +10,6 @@ import System.Directory
 import System.FilePath
 import Data.List.Split
 import Data.ConfigFile
-import Data.Either.Utils
 import Control.Monad.Except
 import Data.ByteString.Char8 (ByteString(..), pack)
 import Data.ByteString.Base64 (decodeLenient)
@@ -23,8 +24,7 @@ data Config = Config { getGitRepositories::[FilePath]
                      , getJiraPassword::ByteString
                      } deriving (Show)
 
-
-readConfig :: IO Config
+readConfig :: IO (Either String Config)
 readConfig = do
   homePath <- getHomeDirectory
   errorOrConfig <- runExceptT $ do
@@ -34,5 +34,14 @@ readConfig = do
     jiraHost <- get cp "jira" "host"
     jiraUser <- get cp "jira" "user"
     jiraPass <- get cp "jira" "pass"
-    return $ Config (splitOn "," $ repos) (splitOn "," $ projects) jiraHost (pack jiraUser) (decodeLenient . pack $ jiraPass)
-  return $ forceEither errorOrConfig -- TODO: do not forceEither
+    return $ Config (splitOn "," repos)
+                    (map projectToPattern (splitOn "," projects))
+                    jiraHost
+                    (pack jiraUser)
+                    (decodeLenient . pack $ jiraPass)
+  return $ case errorOrConfig of
+    (Left err) -> Left $ show err
+    (Right cfg) -> Right cfg
+
+projectToPattern :: String -> IssuePattern
+projectToPattern projectCode = projectCode ++ "\\-[0-9]+"
