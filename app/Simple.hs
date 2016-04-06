@@ -1,40 +1,25 @@
 module Simple where
 
 import System.Environment
-import Text.Printf
-import Control.Monad
 import Control.Monad.Except
-
-import Data.Either.Utils
-
 import Data.Time
 import Data.Time.Format
+import Data.Either.Utils
 
 import Config
 import Jira
 import Git
+import CLI
 
 
 main :: IO ()
 main = do
   args <- getArgs
-  errorOrConfig <- readConfig
-  let config = forceEither errorOrConfig
-      workLog = forceEither $ parseArgs args
-  confirmed <- askToConfirm workLog
-  when confirmed $ do
-    logWork config [workLog]
-    printf "Work logged. Find your timesheet at https://%s/secure/TempoUserBoard!timesheet.jspa\n" (getJiraHost config)
-  unless confirmed $
-    putStrLn "Abort. Nothing logged."
+  config <- forceEither <$> readConfig
+  let workLog = forceEither $ parseArgs args
+  submitLogInteractive config [workLog]
 
-askToConfirm :: WorkLog -> IO Bool
-askToConfirm workLog = do
-  putStrLn "Will log following items:"
-  print workLog
-  putStrLn "OK? (y/n)"
-  r <- getLine
-  return $ r == "y"
+usage = "usage: tempo-simple DATE ISSUE HOURS"
 
 parseArgs :: [String] -> Either String WorkLog
 parseArgs [d,i,h] = do
@@ -42,8 +27,8 @@ parseArgs [d,i,h] = do
   hrs <- parseFloat h
   return $ WorkLog day i hrs
 parseArgs xs
-  | length xs < 3 = throwError "not enough arguments"
-  | otherwise     = throwError "too many arguments"
+  | length xs < 3 = throwError $ "not enough arguments; " ++ usage
+  | otherwise     = throwError $ "too many arguments; " ++ usage
 
 parseDay :: String -> Either String Day
 parseDay xs = case parseTimeM False defaultTimeLocale "%Y/%m/%d" xs of
