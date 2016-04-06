@@ -62,7 +62,9 @@ getGitLogLines' user gitArgs repoPath = do
 
 
 calculateWorkLog :: [Commit] -> [WorkLog]
-calculateWorkLog gitLog = let grouped = L.groupBy (\(Commit d1 _) (Commit d2 _) -> d1 == d2) $ L.sort gitLog
-                              avHours = map ( \cs -> 8.0 / (fromIntegral . length $ cs) ) grouped
-                              logs = zipWith ( \cs h -> map (\(Commit d i) -> WorkLog d i h) cs ) grouped avHours
-                          in concat logs
+calculateWorkLog gitLog =
+  let noDuplicates = L.nub gitLog
+      grouped = L.groupBy (\(Commit d1 _) (Commit d2 _) -> d1 == d2) $ L.sort noDuplicates
+      avHours = map (\cs -> 8.0 / (fromIntegral . length $ cs)) grouped
+      logs = zipWith (\cs h -> map (\(Commit d i) -> WorkLog d i h) cs) grouped avHours
+  in  concat logs

@@ -15,8 +15,7 @@ import Git
 main :: IO ()
 main = do
   gitArgs <- getArgs
-  errorOrConfig <- readConfig
-  let config = forceEither errorOrConfig
+  config <- forceEither <$> readConfig
   user <- getGitUser
   gitLog <- getGitLog config user gitArgs
   let proposedWorkLog = calculateWorkLog gitLog
