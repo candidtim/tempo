@@ -28,10 +28,9 @@ getGitUser :: IO User
 getGitUser = trim <$> readProcess "git" ["config", "user.email"] []
 
 
-getGitLog :: Config -> User -> [String] -> IO [Commit]
+getGitLog :: Config -> User -> GitArgs -> IO [Commit]
 getGitLog config user args = do
-  let gitArgs = ["log", "--format=%aI %s", "--author="++user] ++ args
-  log <- getGitLogLines user gitArgs (getGitRepositories config)
+  log <- getGitLogLines user args (getGitRepositories config)
   return $ extractCommits log (getIssuePatterns config)
 
 
@@ -56,8 +55,8 @@ getGitLogLines user gitArgs repos = let listOfLogs = mapM (getGitLogLines' user 
 -- extract git log lines for one repository only
 getGitLogLines' :: User -> GitArgs -> FilePath -> IO [String]
 getGitLogLines' user gitArgs repoPath = do
-  let args = ["log", "--format=%aI %s", "--author="++user] ++ gitArgs
-      gitProcess = (proc "git" gitArgs){cwd = Just repoPath}
+  let args = ["log", "-g", "--all", "--format=%ai %gD %gs", "--author="++user] ++ gitArgs
+      gitProcess = (proc "git" args){cwd = Just repoPath}
   lines <$> readCreateProcess gitProcess ""
 
 
