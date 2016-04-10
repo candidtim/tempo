@@ -30,7 +30,7 @@ getGitUser = trim <$> readProcess "git" ["config", "user.email"] []
 
 getGitLog :: Config -> User -> GitArgs -> IO [Commit]
 getGitLog config user args = do
-  log <- getGitLogLines user args (getGitRepositories config)
+  log <- reflog user args (getGitRepositories config)
   return $ extractCommits log (getIssuePatterns config)
 
 
@@ -48,13 +48,14 @@ extractCommits' log issuePattern =
 
 
 -- extract git log lines for all given repositories, merged to one list
-getGitLogLines :: User -> GitArgs -> [FilePath] -> IO [String]
-getGitLogLines user gitArgs repos = let listOfLogs = mapM (getGitLogLines' user gitArgs) repos
-                                    in  concat <$> listOfLogs
+reflog :: User -> GitArgs -> [FilePath] -> IO [String]
+reflog user gitArgs repos =
+  let listOfLogs = mapM (reflog' user gitArgs) repos
+  in  concat <$> listOfLogs
 
 -- extract git log lines for one repository only
-getGitLogLines' :: User -> GitArgs -> FilePath -> IO [String]
-getGitLogLines' user gitArgs repoPath = do
+reflog' :: User -> GitArgs -> FilePath -> IO [String]
+reflog' user gitArgs repoPath = do
   let args = ["log", "-g", "--all", "--format=%ai %gD %gs", "--author="++user] ++ gitArgs
       gitProcess = (proc "git" args){cwd = Just repoPath}
   lines <$> readCreateProcess gitProcess ""
