@@ -27,17 +27,18 @@ instance Show WorkLog where
 
 
 logWork :: Config -> [WorkLog] -> IO ()
-logWork conf ws = do
-  request'' <- parseUrl $ issueUrl conf (head ws)
+logWork conf ws = mapM_ (logOne conf) ws
+
+logOne :: Config -> WorkLog -> IO ()
+logOne conf (WorkLog d i h) = do
+  request'' <- parseUrl $ issueUrl conf i
   let request' = applyBasicAuth (getJiraUser conf) (getJiraPassword conf) request''
-      (WorkLog d i h) = head ws -- TODO: log all
       params = [("time", pack.show $ h), ("user", getJiraUser conf), ("date", datefmt d), ("ansidate", ansidatefmt d)]
       request = urlEncodedBody params request'
-  manager  <- newManager tlsManagerSettings
+  manager <- newManager tlsManagerSettings
   runResourceT $ do
     response <- http request manager
     return ()
-  return ()
 
 datefmt :: Day -> ByteString
 datefmt = pack . formatTime defaultTimeLocale "%d/%b/%y"
@@ -45,5 +46,5 @@ datefmt = pack . formatTime defaultTimeLocale "%d/%b/%y"
 ansidatefmt :: Day -> ByteString
 ansidatefmt = pack . formatTime defaultTimeLocale "%Y-%m-%d"
 
-issueUrl :: Config -> WorkLog -> String
-issueUrl conf (WorkLog _ issue _) = printf "https://%s/rest/tempo-rest/1.0/worklogs/%s" (getJiraHost conf) issue
+issueUrl :: Config -> Issue -> String
+issueUrl conf issue = printf "https://%s/rest/tempo-rest/1.0/worklogs/%s" (getJiraHost conf) issue
