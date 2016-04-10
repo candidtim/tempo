@@ -1,7 +1,7 @@
 module Git
-( getGitUser
+( Commit(..)
+, getGitUser
 , getGitLog
-, calculateWorkLog
 ) where
 
 import System.IO
@@ -59,12 +59,3 @@ reflog' user gitArgs repoPath = do
   let args = ["log", "-g", "--all", "--format=%ai %gD %gs", "--author="++user] ++ gitArgs
       gitProcess = (proc "git" args){cwd = Just repoPath}
   lines <$> readCreateProcess gitProcess ""
-
-
-calculateWorkLog :: [Commit] -> [WorkLog]
-calculateWorkLog gitLog =
-  let noDuplicates = L.nub gitLog
-      grouped = L.groupBy (\(Commit d1 _) (Commit d2 _) -> d1 == d2) $ L.sort noDuplicates
-      avHours = map (\cs -> 8.0 / (fromIntegral . length $ cs)) grouped
-      logs = zipWith (\cs h -> map (\(Commit d i) -> WorkLog d i h) cs) grouped avHours
-  in  concat logs
