@@ -16,7 +16,18 @@ Work in Progress
  - log time based on Git history
 
 
-## Build
+## Install
+
+To install locally, install [Haskell Stack](http://docs.haskellstack.org/en/stable/README.html) first, and then use:
+
+    $ stack install
+
+New binaries are installed into `~/.local/bin/`, so make sure to add it to `$PATH`.
+
+Next, see `Configuration` and `Usage` below.
+
+
+## Build locally
 
 To build, install [Haskell Stack](http://docs.haskellstack.org/en/stable/README.html) and use:
 
