@@ -1,4 +1,4 @@
-module Main where
+module FromGit where
 
 import System.Environment
 import Data.Either.Utils
