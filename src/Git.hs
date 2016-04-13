@@ -40,7 +40,7 @@ extractCommits log ps = concatMap (`extractCommits'` ps) log
 extractCommits' :: String -> [IssuePattern] -> [Commit]
 extractCommits' msg ps =
   let issues = concatMap (\p -> getAllTextMatches (msg =~ p)) ps
-      date   = parseTimeOrError False defaultTimeLocale "%Y-%m-%d" $ take 10 msg
+      date   = parseIsoDate msg
   in  map (Commit date) issues
 
 

@@ -18,7 +18,8 @@ calculateWorkLog config log = do
   let grouped' = groupCommits (L.nub log)
       dates = L.sort $ Map.keys grouped'
   timeSheet <- getTimeLogged config (head dates) (last dates)
-  return $ concatMap (\d -> dayWorklog d (fromJust $ Map.lookup d grouped') timeSheet) dates
+  let workLogs = concatMap (\d -> dayWorklog d (fromJust $ Map.lookup d grouped') timeSheet) dates
+  return $ filter (\(WorkLog _ _ h) -> h > 0) workLogs
 
 groupCommits :: [Commit] -> Map.Map Day [Commit]
 groupCommits = foldl (\m c@(Commit d _) -> appendByDay d c m) Map.empty

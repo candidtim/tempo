@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Jira
 ( Issue
@@ -8,6 +9,11 @@ module Jira
 , logWork
 ) where
 
+
+import GHC.Generics
+
+import Data.Function (on)
+import Data.Maybe
 import Data.Time
 import Data.Time.Format
 import Text.Printf
@@ -16,8 +22,10 @@ import Data.Aeson
 import Control.Monad.Trans.Resource (runResourceT)
 import Data.ByteString.Char8 (ByteString(..), pack)
 import qualified Data.Map as Map
+import qualified Data.List as L
 
 import Config
+import Util
 
 
 type Issue = String
@@ -28,6 +36,12 @@ data WorkLog = WorkLog Day Issue HoursWorked
 instance Show WorkLog where
   show (WorkLog d i h) = printf "%s - %s - %.1f hours" (show d) i h
 
+data WorkLogJson = WorkLogJson { timeSpentSeconds :: Float
+                               , dateStarted      :: String
+                               } deriving (Generic)
+instance FromJSON WorkLogJson
+
+
 
 getTimeLogged :: Config -> Day -> Day -> IO (Map.Map Day HoursWorked)
 getTimeLogged conf s e = do
@@ -35,12 +49,14 @@ getTimeLogged conf s e = do
   let request' = applyBasicAuth (getJiraUser conf) (getJiraPassword conf) request''
       params = [("dateFrom", Just $ ansidatefmt s), ("dateTo", Just $ ansidatefmt e)]
       request = setQueryString params request'
-  resp <- withManager $ \m -> httpLbs request m
-  let rs = responseBody resp
-  return $ case decode rs of
-    Nothing -> Map.empty
-    Just (Object o) -> Map.empty
-    _ -> Map.empty
+  manager <- newManager tlsManagerSettings
+  response <- runResourceT $ httpLbs request manager
+  let maybeJsonWorklogs = decode (responseBody response) :: Maybe [WorkLogJson]
+      jsonWorkLogs  = fromJust maybeJsonWorklogs
+      worklogsAsPairs = map (\(WorkLogJson s d) -> (parseIsoDate d, s/3600.0)) jsonWorkLogs
+      pairsByDate = L.groupBy ((==) `on` fst) worklogsAsPairs
+      worklogsByDate = foldl (\m ws@((d,_):_) -> Map.insert d (map snd ws) m) Map.empty pairsByDate
+  return $ Map.map sum worklogsByDate
 
 
 logWork :: Config -> [WorkLog] -> IO ()
