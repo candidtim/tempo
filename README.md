@@ -22,13 +22,6 @@ New binaries are installed into `~/.local/bin/`, so make sure to add it to `$PAT
 Next, see `Configuration` and `Usage` below.
 
 
-## Build locally
-
-To build, install [Haskell Stack](http://docs.haskellstack.org/en/stable/README.html) and use:
-
-    $ stack build
-
-
 ## Configuration
 
 In order to use this tool, you will need to create a configuration file. This can be done
