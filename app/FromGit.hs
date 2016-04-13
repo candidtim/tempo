@@ -16,4 +16,6 @@ main = do
   -- FIXME: user reader monad to read from config?
   gitLog <- getGitLog config user args
   workLog <- calculateWorkLog config gitLog
-  submitLogInteractive config workLog
+  case workLog of
+    [] -> putStrLn "Nothing to log! Go get to work!"
+    _  -> submitLogInteractive config workLog
