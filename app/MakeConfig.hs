@@ -5,6 +5,9 @@ import System.FilePath
 import Text.Printf
 import System.Console.Haskeline
 import Control.Monad
+import Data.ByteString.Char8 (ByteString(..), pack, unpack)
+import Data.ByteString.Base64 (encode)
+import Data.List (intercalate)
 
 import Config
 import Jira
@@ -117,10 +120,13 @@ queryGitRepo = do
 
 writeConfig :: [String] -> [String] -> String -> String -> String -> IO ()
 writeConfig repos projects host user pass = do
-  putStrLn "Would write:"
-  putStrLn $ printf "repos=%s" (show repos)
-  putStrLn $ printf "projects=%s" (show projects)
-  putStrLn $ printf "host=%s" host
-  putStrLn $ printf "user=%s" user
-  putStrLn $ printf "pass=%s" pass
-  putStrLn "Done"
+  putStrLn "Put following content into `~/.tempo.conf` file:"
+  putStrLn ""
+  putStrLn "[git]"
+  putStrLn $ printf "repos = %s" (intercalate "," repos)
+  putStrLn ""
+  putStrLn "[jira]"
+  putStrLn $ printf "projects = %s" (intercalate "," projects)
+  putStrLn $ printf "host = %s" host
+  putStrLn $ printf "user = %s" user
+  putStrLn $ printf "pass = %s" (unpack (encode . pack $ pass))
