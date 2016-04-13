@@ -34,17 +34,14 @@ getGitLog config user args = do
   return $ extractCommits log (getIssuePatterns config)
 
 
--- extract commits matching any expected issue patter from git log
 extractCommits :: [String] -> [IssuePattern] -> [Commit]
-extractCommits log = concatMap (extractCommits' log)
+extractCommits log ps = concatMap (`extractCommits'` ps) log
 
--- extract commits mathcing expected issue pattern from git log
-extractCommits' :: [String] -> IssuePattern -> [Commit]
-extractCommits' log issuePattern =
-  let relevant = filter (=~ issuePattern) log
-      issues = map (=~ issuePattern) relevant
-      dates = map (parseTimeOrError False defaultTimeLocale "%Y-%m-%d" . take 10) relevant
-  in zipWith Commit dates issues
+extractCommits' :: String -> [IssuePattern] -> [Commit]
+extractCommits' msg ps =
+  let issues = concatMap (\p -> getAllTextMatches (msg =~ p)) ps
+      date   = parseTimeOrError False defaultTimeLocale "%Y-%m-%d" $ take 10 msg
+  in  map (Commit date) issues
 
 
 -- extract git log lines for all given repositories, merged to one list
