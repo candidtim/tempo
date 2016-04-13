@@ -2,7 +2,7 @@ module Worklog
 ( calculateWorkLog
 ) where
 
-
+import Data.Time
 import qualified Data.List as L
 import qualified Data.Map as Map
 import Data.Function
@@ -14,15 +14,20 @@ import Jira
 
 
 calculateWorkLog :: Config -> [Commit] -> IO [WorkLog]
-calculateWorkLog config gitLog = do
-  let noDuplicates = L.nub gitLog
-      grouped = L.groupBy (\(Commit d1 _) (Commit d2 _) -> d1 == d2) $ L.sort noDuplicates
-      sorted  = L.sortBy (compare `on` \(Commit d _ : _) -> d) grouped
-      startDay = (\(Commit d _) -> d) $ head.head $ sorted
-      endDay = (\(Commit d _) -> d) $ head.last $ sorted
-  timeLogged <- getTimeLogged config startDay endDay
-  let filledInMaybe = map (\(Commit d _ : _) -> Map.lookup d timeLogged) sorted
-      filledIn = map (fromMaybe 0.0) filledInMaybe
-      avHours = zipWith (\cs fh -> (8.0-fh) / (fromIntegral . length $ cs)) grouped filledIn
-      logs = zipWith (\cs h -> map (\(Commit d i) -> WorkLog d i h) cs) grouped avHours
-  return $ concat logs
+calculateWorkLog config log = do
+  let grouped' = groupCommits (L.nub log)
+      dates = L.sort $ Map.keys grouped'
+  timeSheet <- getTimeLogged config (head dates) (last dates)
+  return $ concatMap (\d -> dayWorklog d (fromJust $ Map.lookup d grouped') timeSheet) dates
+
+groupCommits :: [Commit] -> Map.Map Day [Commit]
+groupCommits = foldl (\m c@(Commit d _) -> appendByDay d c m) Map.empty
+  where appendByDay d c m = Map.insert d (c:commitsByDay d m) m
+        commitsByDay  d m = fromMaybe [] (Map.lookup d m)
+
+dayWorklog :: Day -> [Commit] -> Map.Map Day HoursWorked -> [WorkLog]
+dayWorklog d cs tsh =
+  let hoursFilled = fromMaybe 0.0 $ Map.lookup d tsh
+      hoursLeft   = 8.0 - hoursFilled
+      hoursPerItm = hoursLeft / (fromIntegral . length $ cs)
+  in  map (\(Commit _ i) -> WorkLog d i hoursPerItm) cs
