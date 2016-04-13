@@ -79,7 +79,7 @@ use any filtering criteria and it is safe to run simply:
 
     $ tempo-git
 
-The command is interactive in any case, so you will be asked to confir the work log before
+The command is interactive in any case, so you will be asked to confirm the work log before
 it is submitted to JIRA.
 
 To log a work log entry defined manually, you can use `tempo-simple`:
