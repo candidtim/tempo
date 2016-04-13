@@ -73,6 +73,15 @@ config). For example:
 
     $ tempo-git --since=3.days
 
+`tempo-git` will not log to the days which are already "filled in", but will only log to 
+complete the missing information. It means, that in a typical case, you don't even need to
+use any filtering criteria and it is safe to run simply:
+
+    $ tempo-git
+
+The command is interactive in any case, so you will be asked to confir the work log before
+it is submitted to JIRA.
+
 To log a work log entry defined manually, you can use `tempo-simple`:
 
     # tempo-simple [yyyy/mm/dd] [ISSUE] [HOURS]
