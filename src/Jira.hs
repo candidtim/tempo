@@ -15,6 +15,7 @@ import Network.HTTP.Conduit
 import Data.Aeson
 import Control.Monad.Trans.Resource (runResourceT)
 import Data.ByteString.Char8 (ByteString(..), pack)
+import qualified Data.Map as Map
 
 import Config
 
@@ -28,18 +29,18 @@ instance Show WorkLog where
   show (WorkLog d i h) = printf "%s - %s - %.1f hours" (show d) i h
 
 
-getTimeLogged :: Config -> Day -> IO HoursWorked
-getTimeLogged conf d = do
+getTimeLogged :: Config -> Day -> Day -> IO (Map.Map Day HoursWorked)
+getTimeLogged conf s e = do
   request'' <- parseUrl $ printf "https://%s/rest/tempo-timesheets/3/worklogs" (getJiraHost conf)
   let request' = applyBasicAuth (getJiraUser conf) (getJiraPassword conf) request''
-      params = [("dateFrom", Just $ ansidatefmt d), ("dateTo", Just $ ansidatefmt d)]
+      params = [("dateFrom", Just $ ansidatefmt s), ("dateTo", Just $ ansidatefmt e)]
       request = setQueryString params request'
   resp <- withManager $ \m -> httpLbs request m
   let rs = responseBody resp
   return $ case decode rs of
-    Nothing -> 0
-    Just (Object o) -> 8
-    _ -> 8
+    Nothing -> Map.empty
+    Just (Object o) -> Map.empty
+    _ -> Map.empty
 
 
 logWork :: Config -> [WorkLog] -> IO ()
