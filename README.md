@@ -36,7 +36,13 @@ To build, install [Haskell Stack](http://docs.haskellstack.org/en/stable/README.
 
 ## Configuration
 
-In order to use this tool, create a configuration file in `~/.tempo.conf` with following
+In order to use this tool, you will need to create a configuration file. This can be done
+with `tempo-config` command. It will giude you through the process and validate your 
+configiration at once:
+
+    $ tempo-config
+
+Alternatively, you could create configuration file manually in `~/.tempo.conf` with following
 content:
 
     [git]
