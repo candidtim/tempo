@@ -1,7 +1,7 @@
 module Git
-( getGitUser
+( Commit(..)
+, getGitUser
 , getGitLog
-, calculateWorkLog
 ) where
 
 import System.IO
@@ -34,17 +34,14 @@ getGitLog config user args = do
   return $ extractCommits log (getIssuePatterns config)
 
 
--- extract commits matching any expected issue patter from git log
 extractCommits :: [String] -> [IssuePattern] -> [Commit]
-extractCommits log = concatMap (extractCommits' log)
+extractCommits log ps = concatMap (`extractCommits'` ps) log
 
--- extract commits mathcing expected issue pattern from git log
-extractCommits' :: [String] -> IssuePattern -> [Commit]
-extractCommits' log issuePattern =
-  let relevant = filter (=~ issuePattern) log
-      issues = map (=~ issuePattern) relevant
-      dates = map (parseTimeOrError False defaultTimeLocale "%Y-%m-%d" . take 10) relevant
-  in zipWith Commit dates issues
+extractCommits' :: String -> [IssuePattern] -> [Commit]
+extractCommits' msg ps =
+  let issues = concatMap (\p -> getAllTextMatches (msg =~ p)) ps
+      date   = parseIsoDate msg
+  in  map (Commit date) issues
 
 
 -- extract git log lines for all given repositories, merged to one list
@@ -59,12 +56,3 @@ reflog' user gitArgs repoPath = do
   let args = ["log", "-g", "--all", "--format=%ai %gD %gs", "--author="++user] ++ gitArgs
       gitProcess = (proc "git" args){cwd = Just repoPath}
   lines <$> readCreateProcess gitProcess ""
-
-
-calculateWorkLog :: [Commit] -> [WorkLog]
-calculateWorkLog gitLog =
-  let noDuplicates = L.nub gitLog
-      grouped = L.groupBy (\(Commit d1 _) (Commit d2 _) -> d1 == d2) $ L.sort noDuplicates
-      avHours = map (\cs -> 8.0 / (fromIntegral . length $ cs)) grouped
-      logs = zipWith (\cs h -> map (\(Commit d i) -> WorkLog d i h) cs) grouped avHours
-  in  concat logs
