@@ -5,11 +5,6 @@ JIRA plug-in. For us who already implicitly "track" their activity in Git (bad l
 attempt to report time based on commit history.
 
 
-## Status
-
-Work in Progress
-
-
 ## Features
 
  - log time manually from command line
