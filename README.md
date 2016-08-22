@@ -13,7 +13,14 @@ attempt to report time based on commit history.
 
 ## Install
 
-To install locally, install [Haskell Stack](http://docs.haskellstack.org/en/stable/README.html) first, and then use:
+### Dependencies
+
+ - `ncursers` header files; on Ubuntu, install with: `sudo apt install libncurses5-dev`
+ - [Haskell Stack](http://docs.haskellstack.org/en/stable/README.html) 
+
+### Install locally
+
+Install with `stack`:
 
     $ stack install
 
