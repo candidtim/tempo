@@ -14,6 +14,7 @@ import Jira
 
 
 calculateWorkLog :: Config -> [Commit] -> IO [WorkLog]
+calculateWorkLog _ [] = return []
 calculateWorkLog config log = do
   let grouped' = groupCommits (L.nub log)
       dates = L.sort $ Map.keys grouped'
