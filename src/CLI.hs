@@ -25,6 +25,6 @@ submitLogInteractive config workLog = do
   confirmed <- askToConfirm workLog
   when confirmed $ do
     logWork config workLog
-    printf "Work logged. Find your timesheet at https://%s/secure/TempoUserBoard!timesheet.jspa\n" (getJiraHost config)
+    printf "Work logged. Find your timesheet at https://%s/plugins/servlet/ac/is.origo.jira.tempo-plugin/tempo-my-work\n" (getJiraHost config)
   unless confirmed $
     putStrLn "Abort. Nothing logged."

@@ -31,7 +31,6 @@ library
                      , ConfigFile
                      , mtl
                      , http-conduit
-                     , HTTP-Simple
                      , resourcet
                      , bytestring
                      , base64-bytestring
