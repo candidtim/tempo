@@ -62,7 +62,7 @@ getTimeLogged :: Config -> Day -> Day -> IO (Map.Map Day HoursWorked)
 getTimeLogged conf s e = do
   request'' <- worklogsUrl conf
   let request' = applyBasicAuth (getJiraUser conf) (getJiraPassword conf) request''
-      params = [("dateFrom", Just $ datefmtb s), ("dateTo", Just $ datefmtb e)]
+      params = [("dateFrom", Just $ datefmtb s), ("dateTo", Just $ datefmtb e), ("username", Just $ getJiraUser conf)]
       request = setQueryString params request'
   manager <- newManager tlsManagerSettings
   response <- runResourceT $ httpLbs request manager
